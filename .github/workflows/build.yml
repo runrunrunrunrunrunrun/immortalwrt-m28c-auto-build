@@ -1,0 +1,58 @@
+name: Build ImmortalWrt M28C
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      CCACHE_DIR: ~/.ccache
+
+    steps:
+      - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+      - name: Restore caches
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.ccache
+          immortalwrt/dl
+        key: ${{ runner.os }}-openwrt-${{ hashFiles('m28c.config', 'prepare.sh', 'build.sh', '.gitmodules') }}
+        restore-keys: |
+          ${{ runner.os }}-openwrt-
+
+      - name: Install build dependencies
+      run: |
+        chmod +x install-env.sh
+        ./install-env.sh
+
+      - name: Prepare source tree
+      run: |
+        chmod +x prepare.sh
+        ./prepare.sh
+
+      - name: Build firmware
+      run: |
+        chmod +x build.sh
+        ./build.sh
+
+      - name: Upload firmware
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: immortalwrt-m28c-firmware
+        path: |
+          immortalwrt/bin/targets/**/*
+        if-no-files-found: error
+        retention-days: 14
