@@ -23,6 +23,7 @@ echo "add feeds"
 cat feeds.conf.default > feeds.conf
 echo "" >> feeds.conf
 echo "src-git momo https://github.com/nikkinikki-org/OpenWrt-momo.git" >> feeds.conf
+echo "src-git qmodem https://github.com/FUjr/QModem" >> feeds.conf
 
 echo "update files"
 rm -rf files
@@ -32,6 +33,11 @@ echo "update feeds"
 ./scripts/feeds update -a || { echo "update feeds failed"; exit 1; }
 echo "install feeds"
 ./scripts/feeds install -a || { echo "install feeds failed"; exit 1; }
+if grep -q "^src-git[[:space:]]\+momo[[:space:]]" feeds.conf; then
+    ./scripts/feeds install -a -f -p momo || { echo "install momo feeds failed"; exit 1; }
+else
+    echo "momo feed not configured, skip momo install"
+fi
 if grep -q "^src-git[[:space:]]\+qmodem[[:space:]]" feeds.conf; then
     ./scripts/feeds install -a -f -p qmodem || { echo "install qmodem feeds failed"; exit 1; }
 else
